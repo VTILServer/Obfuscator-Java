@@ -18,7 +18,7 @@ public class XellDumpState {
     /**
      * mark for precompiled code (`<esc>Lua')
      */
-    public static final String LUA_SIGNATURE = "\033Lua";
+    public static final String LUA_SIGNATURE = "\033Xel";
 
     /**
      * for header of binary files -- this is Lua 5.1

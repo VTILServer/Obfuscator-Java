@@ -113,7 +113,7 @@ public class LoadState {
     /**
      * Signature byte indicating the file is a compiled binary chunk
      */
-    private static final byte[] LUA_SIGNATURE = {'\033', 'L', 'u', 'a'};
+    private static final byte[] LUA_SIGNATURE = {'\033', 'X', 'e', 'l'};
     private static final LuaValue[] NOVALUES = {};
     private static final Prototype[] NOPROTOS = {};
     private static final LocVars[] NOLOCVARS = {};

@@ -1,1 +1,1 @@
-error("a")
+print(_VERSION)

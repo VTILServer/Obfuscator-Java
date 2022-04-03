@@ -13,7 +13,7 @@ public class XellLua {
     /**
      * version is supplied by ant build task
      */
-    public static final String _VERSION = "Luaj 0.0";
+    public static final String _VERSION = "XellLuaJ 1.05.7";
 
     /**
      * use return values from previous op

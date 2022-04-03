@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static icu.Xell.Mainline.obfuscator.minify.Minifier.minify;
 import static spark.Spark.*;
 
 public class Obfuscator {
@@ -77,6 +78,7 @@ public class Obfuscator {
         return "";
     }
 
+
     private static String obfuscate(final String input, final boolean minify) throws Exception {
         final InputStream in = IOUtils.toInputStream(input, "UTF-8");
         final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -113,13 +115,22 @@ public class Obfuscator {
             buffer.append((CharSequence) toBase(b));
         }
         String template = new String(Files.readAllBytes(Paths.get("VM.Xell", new String[0])));
+        template = template.replaceAll("%%_INFOWATERMARK%%", "--|Obfuscated with Xell|--");
+
         template = template.replaceAll("%%SEPARATOR_1%%", sep1);
         template = template.replaceAll("%%SEPARATOR_2%%", sep2);
         template = template.replaceAll("%%SEPARATOR_3%%", sep3);
+
         template = opts.patchTemplate(template);
+
+        template = template.replaceAll("%%BYTECODEMARK%%", "XEL");
         template = template.replaceAll("%%BYTECODE%%", buffer.toString());
+
         template = template.replaceAll("%%CHUNKRANDOM%%", opts.dumpCustomStack());
+
         template = template.replaceAll("%%DATASTACK%%", opts.dumpDataStack());
+        if (minify)
+            template = minify(template);
         return template;
     }
 
@@ -129,7 +140,7 @@ public class Obfuscator {
         PrintWriter writer = new PrintWriter("Xell.out.lua");
 
 
-        String source = obfuscate(s, false);
+        String source = obfuscate(s, true);
 
 
         writer.println(source);

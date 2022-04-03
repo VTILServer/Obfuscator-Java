@@ -36,7 +36,7 @@ public class DumpState {
     /**
      * mark for precompiled code (`<esc>Lua')
      */
-    public static final String LUA_SIGNATURE = "\033Lua";
+    public static final String LUA_SIGNATURE = "\033Xel";
 
     /**
      * for header of binary files -- this is Lua 5.1
@@ -71,7 +71,7 @@ public class DumpState {
     /**
      * expected lua header bytes
      */
-    private static final byte[] LUAC_HEADER_SIGNATURE = {'\033', 'L', 'u', 'a'};
+    private static final byte[] LUAC_HEADER_SIGNATURE = {'\033', 'X', 'e', 'l'};
     private static final int SIZEOF_INT = 4;
     private static final int SIZEOF_SIZET = 4;
     private static final int SIZEOF_INSTRUCTION = 4;

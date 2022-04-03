@@ -286,7 +286,7 @@ public class Print extends Lua {
         String s = String.valueOf(f.source);
         if (s.startsWith("@") || s.startsWith("="))
             s = s.substring(1);
-        else if ("\033Lua".equals(s))
+        else if ("\033Xel".equals(s))
             s = "(bstring)";
         else
             s = "(string)";

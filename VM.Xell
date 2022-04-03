@@ -1,29 +1,22 @@
--- ROT13 ciphering algorithm implementation
--- See: http://en.wikipedia.org/wiki/ROT13
+%%_INFOWATERMARK%%
 
--- Returns the ASCII bytecode of either 'a' or 'A'
 local function ascii_base(s)
-return s:lower() == s and ('a'):byte() or ('A'):byte()
+	return s:lower() == s and ('a'):byte() or ('A'):byte()
 end
 
--- ROT13 is based on Caesar ciphering algorithm, using 13 as a key
 local function caesar_cipher(str, key)
-return (str:gsub('%a', function(s)
-local base = ascii_base(s)
-return string.char(((s:byte() - base + key) % 26) + base)
-end))
+	return (str:gsub('%a', function(s)
+		local base = ascii_base(s)
+		return string.char(((s:byte() - base + key) % 26) + base)
+	end))
 end
 
--- str     : a string to be ciphered
--- returns : the ciphered string
 local function rot13_cipher(str)
-return caesar_cipher(str, 13)
+	return caesar_cipher(str, 13)
 end
 
--- str     : a string to be deciphered
--- returns : the deciphered string
 local function rot13_decipher(str)
-return caesar_cipher(str, -13)
+	return caesar_cipher(str, -13)
 end
 
 
@@ -37,41 +30,42 @@ local aaa = string.sub
 local aaabbb = string.byte
 local ulololo = string.find
 local epic1 = setmetatable
-local s = "luraph bad"
+local s = "PSU bad"
 local BitShiftLeft = function(integer, count)
-return integer * (2 ^ count);
+	return integer * (2 ^ count);
 end
 
+
 local ShiftRight = function  (integer, count)
-return math.floor(integer / (2 ^ count))
+	return math.floor(integer / (2 ^ count))
 end
 
 local GetBits = function  (integer, index, count)
-local bits = ShiftRight(integer, index)
-return bits % (2 ^ count)
+	local bits = ShiftRight(integer, index)
+	return bits % (2 ^ count)
 end
 
 local GetBitCount= function (integer)
-local count = 1
-while integer > 1 do
-integer = ShiftRight(integer, 1)
-count = count + 1
-end
-return count
+	local count = 1
+	while integer > 1 do
+		integer = ShiftRight(integer, 1)
+		count = count + 1
+	end
+	return count
 end
 
-%%CUSTOMSTRINGTABLE%%
-local XOR = 1
+	%%CUSTOMSTRINGTABLE%%
+	local XOR = 1
 XOR = function (integerA, integerB)
-local mb = math.max(GetBitCount(integerA), GetBitCount(integerB))
-local arr = {}
-for n = 0, mb-1 do
-arr[mb - n] = (GetBits(integerA, n, 1) ~= GetBits(integerB, n, 1)) and 1 or 0
-end
-return tonumber(table.concat(arr, ""), 2)
+	local mb = math.max(GetBitCount(integerA), GetBitCount(integerB))
+	local arr = {}
+	for n = 0, mb-1 do
+		arr[mb - n] = (GetBits(integerA, n, 1) ~= GetBits(integerB, n, 1)) and 1 or 0
+	end
+	return tonumber(table.concat(arr, ""), 2)
 end
 if bit and bit.bxor then
-XOR = bit.bxor
+	XOR = bit.bxor
 end
 local epic2 = epic1
 local dshdsuysdjds = XOR
@@ -89,362 +83,355 @@ local Sub		= string.sub;
 local dsuydsdslkdsldkl = string.char
 
 local jsddshsuidsjkds = table.concat
-local function gBit(Bit, Start, End) -- No tail-calls, yay.
-if End then -- Thanks to cntkillme for giving input on this shorter, better approach.
-local Res	= (Bit / 2 ^ (Start - 1)) % 2 ^ ((End - 1) - (Start - 1) + 1);
+local function gBit(Bit, Start, End)
+	if End then
+		local Res	= (Bit / 2 ^ (Start - 1)) % 2 ^ ((End - 1) - (Start - 1) + 1);
 
-return Res - Res % 1;
-else
-local Plc = 2 ^ (Start - 1);
+		return Res - Res % 1;
+	else
+		local Plc = 2 ^ (Start - 1);
 
-if (Bit % (Plc + Plc) >= Plc) then
-return 1;
-else
-return 0;
-end;
-end;
+		if (Bit % (Plc + Plc) >= Plc) then
+			return 1;
+		else
+			return 0;
+		end;
+	end;
 end;
 
 local dddddddd = function(char,xorval)
-return dsuydsdslkdsldkl(kdslksdsoipso[2](abcdefg[xorval],char))
+	return dsuydsdslkdsldkl(kdslksdsoipso[2](abcdefg[xorval],char))
 end
 
 local function gsplit(text, pattern, plain)
-plain = (%%STRING1%% == %%STRING1%%)
-local splitStart, length = 1, #text
-return function ()
-if splitStart then
-local sepStart, sepEnd = ulololo(text, pattern, splitStart, plain)
-local ret
-if not sepStart then
-ret = string.sub(text, splitStart)
-splitStart = nil
-elseif sepEnd < sepStart then
--- Empty separator!
-ret = string.sub(text, splitStart, sepStart)
-if sepStart < length then
-splitStart = sepStart + 1
-else
-splitStart = nil
-end
-else
-ret = sepStart > splitStart and string.sub(text, splitStart, sepStart - 1) or ''
-splitStart = sepEnd + 1
-end
-return ret
-end
-end
+	plain = (%%STRING1%% == %%STRING1%%)
+	local splitStart, length = 1, #text
+	return function ()
+		if splitStart then
+			local sepStart, sepEnd = ulololo(text, pattern, splitStart, plain)
+			local ret
+			if not sepStart then
+				ret = string.sub(text, splitStart)
+				splitStart = nil
+			elseif sepEnd < sepStart then
+				ret = string.sub(text, splitStart, sepStart)
+				if sepStart < length then
+					splitStart = sepStart + 1
+				else
+					splitStart = nil
+				end
+			else
+				ret = sepStart > splitStart and string.sub(text, splitStart, sepStart - 1) or ''
+				splitStart = sepEnd + 1
+			end
+			return ret
+		end
+	end
 end
 local epic3 = epic2
 local function split(text, pattern, plain)
-plain = (%%STRING3%% == %%STRING3%%)
-local ret = {}
-for match in gsplit(text, pattern, plain) do
-table.insert(ret, match)
+	plain = (%%STRING3%% == %%STRING3%%)
+	local ret = {}
+	for match in gsplit(text, pattern, plain) do
+		table.insert(ret, match)
+	end
+	return ret
 end
-return ret
-end
-local s1 = "bad = luraph"
-local s2 = "luraph = bad"
+local s1 = "bad = PSU"
+local s2 = "PSU = bad"
 local odsoldssd = "stop looking at this secret codes plz"
 local sddhjsddhhjsdjh = epic3({}, {
-__index = function(a, b)
-return "wowowow roblox!!";
-end;
+	__index = function(a, b)
+		return "wowowow roblox!!";
+	end;
 
-__newindex = function(a,b,c)
-dddd[b] = c
-end
+	__newindex = function(a,b,c)
+		dddd[b] = c
+	end
 })
 
 local function GetMeaning(ByteString)
-ByteString = ByteString:gsub("..", function(x)
-if(x:sub(1,1):byte() == 69 and x:sub(2,2):byte()==83)then
---print(x)
-return string.char(0)
-elseif(x:sub(2):byte()==33)then
---print(x)
-return string.char(tonumber(x:sub(1,1),16))
-elseif(x:sub(1,1):byte()==71)then
---print(x)
-return string.char(0)
-else
---print(x)
-return string.char(tonumber(x,16))
-end
-end)
-local Pos	= 1;
-local gSizet;
-local gInt;
+	ByteString = ByteString:gsub("..", function(x)
+		if(x:sub(1,1):byte() == 69 and x:sub(2,2):byte()==83)then
+			return string.char(0)
+		elseif(x:sub(2):byte()==33)then
+			return string.char(tonumber(x:sub(1,1),16))
+		elseif(x:sub(1,1):byte()==71)then
+			return string.char(0)
+		else
+			return string.char(tonumber(x,16))
+		end
+	end)
+	local Pos	= 1;
+	local gSizet;
+	local gInt;
 
-local function gBits8() -- Get the next byte in the stream.
-local F	= Byte(ByteString, Pos, Pos);
+	local function gBits8()
+		local F	= Byte(ByteString, Pos, Pos);
 
-Pos	= Pos + 1;
+		Pos	= Pos + 1;
 
-return F;
-end;
+		return F;
+	end;
 
-local function gBits32()
-local W, X, Y, Z	= Byte(ByteString, Pos, Pos + 3);
+	local function gBits32()
+		local W, X, Y, Z	= Byte(ByteString, Pos, Pos + 3);
 
-Pos	= Pos + 4;
+		Pos	= Pos + 4;
 
-return (Z * 16777216) + (Y * 65536) + (X * 256) + W;
-end;
+		return (Z * 16777216) + (Y * 65536) + (X * 256) + W;
+	end;
 
-local function gBits64()
-return gBits32() * 4294967296 + gBits32();
-end;
+	local function gBits64()
+		return gBits32() * 4294967296 + gBits32();
+	end;
 
-local function gFloat()
--- thanks @Eternal for giving me this so I could mangle it in here and have it work
-local Left = gBits32();
-local Right = gBits32();
-local IsNormal = 1
-local Mantissa = (gBit(Right, 1, 20) * (2 ^ 32))
-+ Left;
+	local function gFloat()
+		local Left = gBits32();
+		local Right = gBits32();
+		local IsNormal = 1
+		local Mantissa = (gBit(Right, 1, 20) * (2 ^ 32))
+			+ Left;
 
-local Exponent = gBit(Right, 21, 31);
-local Sign = ((-1) ^ gBit(Right, 32));
+		local Exponent = gBit(Right, 21, 31);
+		local Sign = ((-1) ^ gBit(Right, 32));
 
-if (Exponent == 0) then
-if (Mantissa == 0) then
-return Sign * 0 -- +-0
-else
-Exponent = 1
-IsNormal = 0
-end
-elseif (Exponent == 2047) then
-if (Mantissa == 0) then
-return Sign * (1 / 0) -- +-Inf
-else
-return Sign * (0 / 0) -- +-Q/Nan
-end
-end
+		if (Exponent == 0) then
+			if (Mantissa == 0) then
+				return Sign * 0
+			else
+				Exponent = 1
+				IsNormal = 0
+			end
+		elseif (Exponent == 2047) then
+			if (Mantissa == 0) then
+				return Sign * (1 / 0)
+			else
+				return Sign * (0 / 0)
+			end
+		end
 
--- sign * 2**e-1023 * isNormal.mantissa
-return math.ldexp(Sign, Exponent - 1023) * (IsNormal + (Mantissa / (2 ^ 52)))
-end;
+		return math.ldexp(Sign, Exponent - 1023) * (IsNormal + (Mantissa / (2 ^ 52)))
+	end;
 
-local function gString(Len, deob)
-local Str;
+	local function gString(Len, deob)
+		local Str;
 
-if Len then
-Str	= Sub(ByteString, Pos, Pos + Len - 1);
+		if Len then
+			Str	= Sub(ByteString, Pos, Pos + Len - 1);
 
-Pos = Pos + Len;
-else
-Len = gSizet();
+			Pos = Pos + Len;
+		else
+			Len = gSizet();
 
-if (Len == 0) then return; end;
+			if (Len == 0) then return; end;
 
-Str	= Sub(ByteString, Pos, Pos + Len - 1);
+			Str	= Sub(ByteString, Pos, Pos + Len - 1);
 
-Pos = Pos + Len;
-end;
-if deob then
+			Pos = Pos + Len;
+		end;
+		if deob then
 
-return rot13_decipher(Str);
-else
-return Str;
-end
-end;
+			return rot13_decipher(Str);
+		else
+			return Str;
+		end
+	end;
 
-%%OPCODES%%
+		%%OPCODES%%
 
-local function ChunkDecode()
-local Instr	= {};
-local Const	= {};
-local Proto	= {};
-local Chunk	= {
-Instr	= Instr; -- Instructions
-Const	= Const; -- Constants
-Proto	= Proto; -- Prototypes
-Lines	= {}; -- Lines
-%%CHUNKRANDOM%%
-};
+		local function ChunkDecode()
+			local Instr	= {};
+			local Const	= {};
+			local Proto	= {};
+			local Chunk	= {
+				Instr	= Instr;
+				Const	= Const;
+				Proto	= Proto;
+				Lines	= {};
+				%%CHUNKRANDOM%%
+			};
 
-if Chunk.Name then
-Chunk.Name	= Sub(Chunk.Name, 1, -2);
-end;
+			if Chunk.Name then
+			Chunk.Name	= Sub(Chunk.Name, 1, -2);
+		end;
 
-for Idx = 1, gInt() do -- Loading instructions to the chunk.
-local Data	= gBits32();
-local Opco	= gBit(Data, 1, 6);
-local Type	= Opcode[Opco];
-local Inst	= {
-Value	= Data;
-%%ENUMVARIABLE%%	= Opco;
-gBit(Data, 7, 14); -- Register A.
-};
+			for Idx = 1, gInt() do
+			local Data	= gBits32();
+			local Opco	= gBit(Data, 1, 6);
+			local Type	= Opcode[Opco];
+			local Inst	= {
+				Value	= Data;
+					%%ENUMVARIABLE%%	= Opco;
+				gBit(Data, 7, 14);
+			};
 
-%%CODES%%
+				%%CODES%%
 
-Instr[Idx]	= Inst;
-end;
+				Instr[Idx]	= Inst;
+		end;
 
-local hasExtraShit = gFloat()
-if (hasExtraShit == 1) then
-for Idx = 1, 5 do
-gBits8();
-local debug = Sub(gString(nil, false), 1, -2);
-end
-end
-for Idx = 1, gInt()-3 do -- Load constants.
+			local hasExtraShit = gFloat()
+			if (hasExtraShit == 1) then
+			for Idx = 1, 5 do
+				gBits8();
+				local debug = Sub(gString(nil, false), 1, -2);
+			end
+		end
+			for Idx = 1, gInt()-3 do
 
-local Type	= gBits8();
-local Cons;
+			local Type	= gBits8();
+			local Cons;
 
-if (Type == 1) then -- Boolean
-Cons	= (gBits8() == 0);
-elseif (Type == 3) then -- Float/Double
-Cons	= gFloat();
-elseif (Type == 4) then
-local strXd = Sub(gString(nil, false), 1, -2);
-local parts = split(strXd, '|XELL|')
-Cons	= rot13_decipher(parts[1] .. parts[2]);
-end;
-Const[Idx - 1]	= Cons;
-end;
+			if (Type == 1) then
+				Cons	= (gBits8() == 0);
+			elseif (Type == 3) then
+				Cons	= gFloat();
+			elseif (Type == 4) then
+				local strXd = Sub(gString(nil, false), 1, -2);
+				local parts = split(strXd, '|XELL|')
+				Cons	= rot13_decipher(parts[1] .. parts[2]);
+			end;
+			Const[Idx - 1]	= Cons;
+		end;
 
 
-for Idx = 1, gInt() do -- Nested function prototypes.
-Proto[Idx - 1]	= ChunkDecode();
-end;
+			for Idx = 1, gInt() do
+			Proto[Idx - 1]	= ChunkDecode();
+		end;
 
-do -- Debugging
-local Lines	= Chunk.Lines;
+			do
+			local Lines	= Chunk.Lines;
 
-for Idx = 1, gInt() do
-Lines[Idx]	= gBits32();
-end;
+			for Idx = 1, gInt() do
+				Lines[Idx]	= gBits32();
+			end;
 
-for _ = 1, gInt() do -- Locals in stack.
-gString(); -- Name of local.
-gBits32(); -- Starting point.
-gBits32(); -- End point.
-end;
+			for _ = 1, gInt() do
+				gString();
+				gBits32();
+				gBits32();
+			end;
 
-for _ = 1, gInt() do -- Upvalues.
-gString(); -- Name of upvalue.
-end;
-end;
+			for _ = 1, gInt() do
+				gString();
+			end;
+		end;
 
-return Chunk; -- Finished chunk.
-end;
+			return Chunk;
+		end;
 
-do -- Most of this chunk I was too lazy to reformat or change
-assert(gString(4) == "\27XEL", %%STRING10%%);
+	do
+		assert(gString(4) == "\27XEL", %%STRING10%%);
 
-gBits8();--lua version
+		gBits8();
 
-gBits8(); -- Probably version control.
-gBits8(); -- Is small endians.
+		gBits8();
+		gBits8();
 
-local IntSize	= gBits8(); -- Int size
-local Sizet		= gBits8(); -- size_t
+		local IntSize	= gBits8();
+		local Sizet		= gBits8();
 
-if (IntSize == 4) then
-gInt	= gBits32;
-elseif (IntSize == 8) then
-gInt	= gBits64;
-else
-error(%%STRING9%%, 2);
-end;
+		if (IntSize == 4) then
+			gInt	= gBits32;
+		elseif (IntSize == 8) then
+			gInt	= gBits64;
+		else
+			error(%%STRING9%%, 2);
+		end;
 
-if (Sizet == 4) then
-gSizet	= gBits32;
-elseif (Sizet == 8) then
-gSizet	= gBits64;
-else
-error(%%STRING8%%, 2);
-end;
+		if (Sizet == 4) then
+			gSizet	= gBits32;
+		elseif (Sizet == 8) then
+			gSizet	= gBits64;
+		else
+			error(%%STRING8%%, 2);
+		end;
 
-assert(gString(3) == "\4\8\0", %%STRING13%%);
-end;
+		assert(gString(3) == "\4\8\0", %%STRING13%%);
+	end;
 
-return ChunkDecode();
+	return ChunkDecode();
 end;
 
 local function _Returns(...)
-return Select(%%STRING4%%, ...), {...};
+	return Select(%%STRING4%%, ...), {...};
 end;
 
 local function Wrap(Chunk, Env, Upvalues)
-local Instr	= Chunk.Instr;
-local Const	= Chunk.Const;
-local Proto	= Chunk.Proto;
+	local Instr	= Chunk.Instr;
+	local Const	= Chunk.Const;
+	local Proto	= Chunk.Proto;
 
-local function OnError(Err, Position) -- Handle your errors in whatever way.
-local Name	= Chunk.Name or %%STRING7%%;
-local Line	= Chunk.Lines[Position] or %%STRING5%%;
+	local function OnError(Err, Position)
+		local Name	= Chunk.Name or %%STRING7%%;
+		local Line	= Chunk.Lines[Position] or %%STRING5%%;
 
-error(string.format(%%STRING6%%, Name, Line, tostring(Err)), 0);
-end;
+		error(string.format(%%STRING6%%, Name, Line, tostring(Err)), 0);
+	end;
 
-return function(...)
-local InstrPoint, Top	= 1, -1;
-local Vararg, Varargsz	= {}, Select(%%STRING4%%, ...) - 1;
+	return function(...)
+		local InstrPoint, Top	= 1, -1;
+		local Vararg, Varargsz	= {}, Select(%%STRING4%%, ...) - 1;
 
-local GStack	= {};
-local Lupvals	= {};
-local Stack		= epic3({}, {
-__index		= GStack;
-__newindex	= function(_, Key, Value)
-if (Key > Top) then
-Top	= Key;
-end;
+		local GStack	= {};
+		local Lupvals	= {};
+		local Stack		= epic3({}, {
+			__index		= GStack;
+			__newindex	= function(_, Key, Value)
+				if (Key > Top) then
+					Top	= Key;
+				end;
 
-GStack[Key]	= Value;
-end;
-});
+				GStack[Key]	= Value;
+			end;
+		});
 
-local function Loop()
-local Inst, %%ENUMVARIABLE%%;
+		local function Loop()
+			local Inst, %%ENUMVARIABLE%%;
 
-while true do
-Inst		= Instr[InstrPoint];
-%%ENUMVARIABLE%%		= Inst.%%ENUMVARIABLE%%;
-InstrPoint	= InstrPoint + 1;
+			while true do
+				Inst		= Instr[InstrPoint];
+					%%ENUMVARIABLE%%		= Inst.%%ENUMVARIABLE%%;
+				InstrPoint	= InstrPoint + 1;
 
-%%VMINSTRUCTIONS%%
-end;
-end;
+					%%VMINSTRUCTIONS%%
+			end;
+		end;
 
-local Args	= {...};
+		local Args	= {...};
 
-for Idx = 0, Varargsz do
-if (Idx >= Chunk.Args) then
-Vararg[Idx - Chunk.Args] = Args[Idx + 1];
-else
-Stack[Idx] = Args[Idx + 1];
-end;
-end;
+		for Idx = 0, Varargsz do
+			if (Idx >= Chunk.Args) then
+				Vararg[Idx - Chunk.Args] = Args[Idx + 1];
+			else
+				Stack[Idx] = Args[Idx + 1];
+			end;
+		end;
 
-local A, B, C	= pcall(Loop); -- Pcalling to allow yielding
+		local A, B, C	= pcall(Loop);
 
-if A then -- We're always expecting this to come out true (because errorless code)
-if B and (C > 0) then -- So I flipped the conditions.
-return unpack(B, 1, C);
-end;
+		if A then
+			if B and (C > 0) then
+				return unpack(B, 1, C);
+			end;
 
-return;
-else
-OnError(B, InstrPoint - 1); -- Didn't get time to test the `-1` honestly, but I assume it works properly
-end;
-end;
+			return;
+		else
+			OnError(B, InstrPoint - 1);
+		end;
+	end;
 end;
 local bytetbl = {}
 epic3(bytetbl,{
-["__index"] = function(x,d)
-return "XEL|%%BYTECODE%%"
-end
+	["__index"] = function(x,d)
+		return ("%%BYTECODEMARK%%|%%BYTECODE%%")
+	end
 })
 local function delete(func)
-func()
-epic3(bytetbl,{
-["__index"] = function(x,d) return nil end
-})
+	func()
+	epic3(bytetbl,{
+		["__index"] = function(x,d) return nil end
+	})
 end
 delete(Wrap(GetMeaning(string.sub(bytetbl[69], 5)), getfenv()))
