@@ -1,4 +1,8 @@
-%%_INFOWATERMARK%%
+--[[
+  || %%_INFOWATERMARK%%
+  || Version: %%_Version%%
+--]]
+
 
 local function ascii_base(s)
 	return s:lower() == s and ('a'):byte() or ('A'):byte()

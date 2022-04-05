@@ -23,6 +23,10 @@ public class Obfuscator {
     static AtomicBoolean hasErrored;
     static int zeroCount;
 
+    private boolean isCTO = false;
+    private boolean isDebug = true;
+    private boolean isPublic = false;
+
     static {
         Obfuscator.base = new String[]{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"};
         Obfuscator.hasErrored = new AtomicBoolean(false);
@@ -115,7 +119,8 @@ public class Obfuscator {
             buffer.append((CharSequence) toBase(b));
         }
         String template = new String(Files.readAllBytes(Paths.get("VM.Xell", new String[0])));
-        template = template.replaceAll("%%_INFOWATERMARK%%", "--|Obfuscated with Xell|--");
+        template = template.replaceAll("%%_INFOWATERMARK%%", "Obfuscated with Xell");
+        template = template.replaceAll("%%_Version%%", "1.0.4");
 
         template = template.replaceAll("%%SEPARATOR_1%%", sep1);
         template = template.replaceAll("%%SEPARATOR_2%%", sep2);
