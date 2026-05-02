@@ -91,16 +91,3 @@ Run Lua benchmark cases against plain and obfuscated output:
 ```
 
 Results are written to `benchmarks\results\last.csv`.
-
-# $Updatelog$
-
-```text
---V1.0.4--
-Minify Update
---V1.0.3--
-Fixes
---V1.0.2--
-Fixing everything
---V1.0.1--
-Fixing The OG Obfuscator
-```
