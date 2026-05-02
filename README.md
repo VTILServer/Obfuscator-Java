@@ -1,6 +1,8 @@
 # Obfuscator-Java
 AxonObfuscator Fork
 
+## This obfuscator website and installer and ALL ps1 stuff is written by AI, please keep that in mind, most of the actual obfuscator parts are written either by the original creators or me,,,
+
 ## Documentation
 
 See [docs/OBFUSCATOR.md](docs/OBFUSCATOR.md) for build instructions, Darklua configuration, usage, verification, and troubleshooting.
