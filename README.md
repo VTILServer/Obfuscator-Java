@@ -1,5 +1,5 @@
 # Obfuscator-Java
-AxonObfuscator-Fork
+AxonObfuscator Fork
 
 ## Documentation
 
