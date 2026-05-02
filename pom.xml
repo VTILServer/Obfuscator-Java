@@ -13,6 +13,17 @@
     </properties>
 
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+            <resource>
+                <directory>${project.basedir}</directory>
+                <includes>
+                    <include>VM.Xell</include>
+                </includes>
+            </resource>
+        </resources>
         <plugins>
             <plugin>
 
@@ -24,7 +35,7 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>lib/</classpathPrefix>
-                            <mainClass>icu.Xell.obfuscator.Obfuscator</mainClass>
+                            <mainClass>icu.Xell.Mainline.obfuscator.Obfuscator</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
@@ -32,10 +43,11 @@
 
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.7.1</version>
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>icu.Xell.obfuscator.Obfuscator</mainClass>
+                            <mainClass>icu.Xell.Mainline.obfuscator.Obfuscator</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
@@ -66,11 +78,20 @@
             <artifactId>guava</artifactId>
             <version>18.0</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/com.sparkjava/spark-core -->
         <dependency>
-            <groupId>com.sparkjava</groupId>
-            <artifactId>spark-core</artifactId>
-            <version>2.8.0</version>
+            <groupId>org.eclipse.rap</groupId>
+            <artifactId>org.eclipse.rap.rwt</artifactId>
+            <version>3.27.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-server</artifactId>
+            <version>9.4.53.v20231009</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-servlet</artifactId>
+            <version>9.4.53.v20231009</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/commons-dbutils/commons-dbutils -->
 
@@ -110,6 +131,12 @@ act/mysql/mysql-connector-java -->
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
             <version>2.6</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.13.2</version>
+            <scope>test</scope>
         </dependency>
 
     </dependencies>

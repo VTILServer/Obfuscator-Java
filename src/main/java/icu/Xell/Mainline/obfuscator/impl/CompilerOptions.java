@@ -1,15 +1,17 @@
 package icu.Xell.obfuscator.impl;
 
-import org.apache.commons.lang.RandomStringUtils;
 import org.luaj.vm2.Lua;
 import org.luaj.vm2.XellLua;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 import java.util.*;
 
 public class CompilerOptions {
 
-    final int uniqueId = new Random().nextInt(200);
+    private final SecureRandom random = new SecureRandom();
+    final int uniqueId = random.nextInt(1_000_000);
     private final LinkedHashMap<String, Integer> opcodes = new LinkedHashMap();
     private final LinkedHashMap<String, Integer> luaValues = new LinkedHashMap();
     private final LinkedList<String> chunkOrder = new LinkedList<>();
@@ -28,11 +30,7 @@ public class CompilerOptions {
     private String enumKeyword = "";
     public CompilerOptions() {
 
-        char[] enumpool = {'i', 'I', '1', 'l'};
-        enumKeyword = RandomStringUtils.random(20, enumpool);
-        while (enumKeyword.startsWith("1")) {
-            enumKeyword = RandomStringUtils.random(20, enumpool);
-        }
+        enumKeyword = "__xell_opcode";
         chunkOrder.add("NAME");
         chunkOrder.add("FIRSTL");
         chunkOrder.add("LASTL");
@@ -41,7 +39,7 @@ public class CompilerOptions {
         chunkOrder.add("VARGS");
         chunkOrder.add("STACK");
 
-        Collections.shuffle(chunkOrder);
+        Collections.shuffle(chunkOrder, random);
 
         chunkDataOrder.add("CODE");
         chunkDataOrder.add("CONSTANTS");
@@ -97,7 +95,6 @@ public class CompilerOptions {
         luaValues.put("TFUNCTION", 6);
         luaValues.put("TUSERDATA", 7);
         luaValues.put("TTHREAD", 9);
-        //System.out.println("Now shuffling, pray for it to work!");
         shuffleMap(opcodes);
         //shuffleMap(luaValues);
         int i = -1;
@@ -107,77 +104,67 @@ public class CompilerOptions {
         for (String opcode : opcodes.keySet()) {
             i++;
             luaP_opmodes.set(opcodes.get(opcode), Lua.luaP_opmodes[i]);
-            //System.out.println("(" + opcode + ") [" + i + "]: " + opcodes.get(opcode));
         }
 
-
-        //opcode names lol
-        ArrayList<String> opcodenames = new ArrayList<>(Arrays.asList("are u foken blind u cant see me?!", "Xell > all", "wow ur bad", "i <3 u", "u <3 me", "lalala"));
 
         for (int a = 0; a < 3; a++) {
-            int val = new Random().nextInt(opcodenames.size());
-            String code = opcodenames.get(val);
-            opcodenames.remove(val);
-
-            System.out.println("Opcode #" + a + " = " + code);
-            opCodeNames.add(generateCustomString(code));
+            opCodeNames.add(generateCustomString(randomString(random.nextInt(10) + 14, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_".toCharArray())));
         }
 
-        Collections.shuffle(opCodeNames);
+        Collections.shuffle(opCodeNames, random);
 
     }
 
     public String generateCustomString(String current) {
-        String s = "jsddshsuidsjkds({";
-        for (byte b : current.getBytes()) {
-            int value = new Random().nextInt(1234);
+        StringBuilder s = new StringBuilder("jsddshsuidsjkds({");
+        int position = 0;
+        for (byte b : current.getBytes(StandardCharsets.UTF_8)) {
+            int value = random.nextInt(4096) + 1;
 
             values.add(lololo, value);
 
-            //customStringStuff += "["+lololo+"] = "+value+";";
-            s += "dddddddd(" + (b ^ value) + "," + values.size() + ");";
+            if (position > 0) {
+                s.append(",");
+            }
+            s.append("[").append(position + 1).append("]=dddddddd(").append(b ^ value).append(",").append(values.size()).append(")");
             lololo++;
+            position++;
 
         }
-        s += "})";
+        s.append("})");
 
-        return s;
+        return s.toString();
     }
 
 
     private String generateLuaOpcodes() {
-
-        System.out.println("[!!] Used opcodes: " + usedOpcodes.size() + " " + usedOpcodes);
-        String lua = "local Opcode = {";
+        StringBuilder lua = new StringBuilder("local Opcode={}");
 
         for (String opcode : opcodes.keySet()) {
-            if (!usedOpcodes.contains(opcodesOriginal.get(opcode))) {
-                // continue;
-            }
+            lua.append("Opcode[").append(generateLuaObfNumber(opcodes.get(opcode))).append("]=");
             if (XellLua.getOpMode(opcodes.get(opcode), this) == XellLua.iABC) {
-                lua += "[" + opcodes.get(opcode) + "] = " + opCodeNames.get(0) + ",";
+                lua.append(opCodeNames.get(0));
             } else if (XellLua.getOpMode(opcodes.get(opcode), this) == XellLua.iABx) {
-                lua += "[" + opcodes.get(opcode) + "] = " + opCodeNames.get(1) + ",";
+                lua.append(opCodeNames.get(1));
             } else {
-                lua += "[" + opcodes.get(opcode) + "] = " + opCodeNames.get(2) + ",";
+                lua.append(opCodeNames.get(2));
             }
+            lua.append(";");
         }
-        lua += "}";
-        return lua;
+        return lua.toString();
     }
 
     public String dumpDataStack() throws IOException {
         String chunksLua = "";
         for (String s : getChunkDataOrder()) {
-            System.out.println(s);
             if (s.equals("CODE")) {
                 chunksLua += "for Idx = 1, gInt() do -- Loading instructions to the chunk.\n" +
                         "\t\t\tlocal Data\t= gBits32();\n" +
                         "\t\t\tlocal Opco\t= gBit(Data, 1, 6);\n" +
                         "\t\t\tlocal Type\t= Opcode[Opco];\n" +
                         "\t\t\tlocal Inst\t= {\n" +
-                        "\t\t\t\tValue\t= Data;\n" +
-                        "\t\t\t\t" + enumKeyword + "t= Opco;\n" +
+                        "\t\t\t\tData;\n" +
+                        "\t\t\t\tOpco;\n" +
                         "\t\t\t\tgBit(Data, 7, 14); -- Register A.\n" +
                         "\t\t\t};\n" +
                         "\n" +
@@ -215,7 +202,7 @@ public class CompilerOptions {
             }
             if (s.equals("DEBUG")) {
                 chunksLua += "do -- Debugging\n" +
-                        "\t\t\tlocal Lines\t= Chunk.Lines;\n" +
+                        "\t\t\tlocal Lines\t= Chunk[__xell_chunk_lines];\n" +
                         "\n" +
                         "\t\t\tfor Idx = 1, gInt() do\n" +
                         "\t\t\t\tLines[Idx]\t= gBits32();\n" +
@@ -239,38 +226,37 @@ public class CompilerOptions {
     }
 
     public String dumpCustomStack() throws IOException {
-        String chunksLua = "";
+        StringBuilder chunksLua = new StringBuilder();
         for (String s : getChunkOrder()) {
-            //System.out.println("Dumping: " + s);
             if (s.equals("NAME")) {
-                chunksLua += "Name = gString();\n";
+                chunksLua.append("[__xell_chunk_name]=gString();\n");
             }
             if (s.equals("FIRSTL")) {
-                chunksLua += "FirstL = gInt();\n";
+                chunksLua.append("[__xell_chunk_first_line]=gInt();\n");
             }
             if (s.equals("LASTL")) {
-                chunksLua += "LastL = gInt();\n";
+                chunksLua.append("[__xell_chunk_last_line]=gInt();\n");
             }
             if (s.equals("UPVALS")) {
-                chunksLua += "Upvals = gBits8();\n";
+                chunksLua.append("[__xell_chunk_upvals]=gBits8();\n");
             }
             if (s.equals("ARGS")) {
-                chunksLua += "Args = gBits8();\n";
+                chunksLua.append("[__xell_chunk_args]=gBits8();\n");
             }
             if (s.equals("VARGS")) {
-                chunksLua += "Vargs = gBits8();\n";
+                chunksLua.append("[__xell_chunk_vargs]=gBits8();\n");
             }
             if (s.equals("STACK")) {
-                chunksLua += "Stack    = gBits8();\n";
+                chunksLua.append("[__xell_chunk_stack]=gBits8();\n");
             }
         }
 
-        return chunksLua;
+        return chunksLua.toString();
     }
 
     public String patchTemplate(String template) {
         template = template.replaceAll("%%ENUMVARIABLE%%", enumKeyword);
-        String vmParser = "";
+        StringBuilder vmParser = new StringBuilder();
         HashMap<Integer, String> vmInstr = new HashMap<>();
         vmInstr.put(0, "if (" + enumKeyword + " == %%OP_MOVE%%) then -- MOVE\n\n" +
                 "                        \t\t\t\t\tStack[Inst[1]]\t= Stack[Inst[2]]; end");
@@ -707,7 +693,7 @@ public class CompilerOptions {
                 "\n" +
                 "\t\t\t\t\tif (C == 0) then\n" +
                 "\t\t\t\t\t\tInstrPoint\t= InstrPoint + 1;\n" +
-                "\t\t\t\t\t\tC\t\t\t= Instr[InstrPoint].Value;\n" +
+                "\t\t\t\t\t\tC\t\t\t= Instr[InstrPoint][__xell_inst_data];\n" +
                 "\t\t\t\t\tend;\n" +
                 "\n" +
                 "\t\t\t\t\tlocal Offset\t= (C - 1) * 50;\n" +
@@ -745,7 +731,7 @@ public class CompilerOptions {
                 "\t\t\t\t\tlocal Indexes;\n" +
                 "\t\t\t\t\tlocal NewUvals;\n" +
                 "\n" +
-                "\t\t\t\t\tif (NewProto.Upvals ~= 0) then\n" +
+                "\t\t\t\t\tif (NewProto[__xell_chunk_upvals] ~= 0) then\n" +
                 "\t\t\t\t\t\tIndexes\t\t= {};\n" +
                 "\t\t\t\t\t\tNewUvals\t= setmetatable({}, {\n" +
                 "\t\t\t\t\t\t\t\t__index = function(_, Key)\n" +
@@ -761,12 +747,12 @@ public class CompilerOptions {
                 "\t\t\t\t\t\t\t}\n" +
                 "\t\t\t\t\t\t);\n" +
                 "\n" +
-                "\t\t\t\t\t\tfor Idx = 1, NewProto.Upvals do\n" +
+                "\t\t\t\t\t\tfor Idx = 1, NewProto[__xell_chunk_upvals] do\n" +
                 "\t\t\t\t\t\t\tlocal Mvm\t= Instr[InstrPoint];\n" +
                 "\n" +
-                "\t\t\t\t\t\t\tif (Mvm." + enumKeyword + " == %%OP_MOVE%%) then -- MOVE\n" +
+                "\t\t\t\t\t\t\tif (Mvm[__xell_inst_opcode] == %%OP_MOVE%%) then -- MOVE\n" +
                 "\t\t\t\t\t\t\t\tIndexes[Idx - 1] = {Stk, Mvm[2]};\n" +
-                "\t\t\t\t\t\t\telseif (Mvm." + enumKeyword + " == %%OP_GETUPVAL%%) then -- GETUPVAL\n" +
+                "\t\t\t\t\t\t\telseif (Mvm[__xell_inst_opcode] == %%OP_GETUPVAL%%) then -- GETUPVAL\n" +
                 "\t\t\t\t\t\t\t\tIndexes[Idx - 1] = {Upvalues, Mvm[2]};\n" +
                 "\t\t\t\t\t\t\tend;\n" +
                 "\n" +
@@ -776,7 +762,7 @@ public class CompilerOptions {
                 "\t\t\t\t\t\tLupvals[#Lupvals + 1]\t= Indexes;\n" +
                 "\t\t\t\t\tend;\n" +
                 "\n" +
-                "\t\t\t\t\tStk[Inst[1]]\t\t\t= Wrap(NewProto, Env, NewUvals); end");
+                "\t\t\t\t\tStk[Inst[1]]\t\t\t= XellRun(NewProto, Env, NewUvals); end");
         vmInstr.put(37, "if (" + enumKeyword + " == %%OP_VARARG%%) then -- VARARG\n" +
                 "\t\t\t\t\tlocal A\t= Inst[1];\n" +
                 "\t\t\t\t\tlocal B\t= Inst[2];\n" +
@@ -787,31 +773,34 @@ public class CompilerOptions {
                 "\t\t\t\t\tfor Idx = A, A + (B > 0 and B - 1 or Varargsz) do\n" +
                 "\t\t\t\t\t\tStk[Idx]\t= Vars[Idx - A];\n" +
                 "\t\t\t\t\tend;\n" +
-                "\t\t\t\tend; end");
+                "\t\t\t\tend");
 
+        int dispatchSalt = random.nextInt(193) + 31;
+        String dispatchSaltName = "__xell_dispatch_salt";
+        String dispatchTableName = "__xell_dispatch_table";
+        String handlerName = "__xell_handler";
+        String doneName = "__xell_done";
+        String valuesName = "__xell_values";
+        String countName = "__xell_count";
         LinkedList<String> usedRn = new LinkedList<>();
-        for (int opcode : usedOpcodes) {
-            String rn = "";
-            rn += vmInstr.get(opcode) + "\n";
-            if (new Random().nextBoolean()) {
-                if (new Random().nextBoolean()) {
-                    rn += " if aaabbb(aaa(s,3,3)) ~= 114 then  " + enumKeyword + " = " + enumKeyword + "^ 3  end ";
-                } else {
-                    rn += " if aaabbb(aaa(s2,#s2/2,#s2/2)) ~= 104 then " + enumKeyword + " = " + enumKeyword + "/ 2 end ";
-                }
+        for (int opcode : vmInstr.keySet()) {
+            int shuffledOpcode = getShuffledOpcodeForOriginal(opcode);
+            int dispatchKey = (shuffledOpcode + dispatchSalt) % 257;
+            usedRn.add("[" + generateLuaObfNumber(dispatchKey) + "]=function()\n" + prepareVmHandler(opcode, vmInstr.get(opcode)) + "\nend");
+        }
+
+        Collections.shuffle(usedRn, random);
+
+        for (int i = 0; i < usedRn.size(); i++) {
+            if (i > 0) {
+                vmParser.append(",");
             }
-
-            usedRn.add(rn);
-        }
-
-        Collections.shuffle(usedRn);
-
-        for (String s : usedRn) {
-            vmParser += s;
+            vmParser.append(usedRn.get(i));
         }
 
 
-        template = template.replaceAll("%%VMINSTRUCTIONS%%", vmParser);
+        template = template.replaceAll("%%VMHANDLERS%%", "local " + dispatchSaltName + "=" + generateLuaObfNumber(dispatchSalt) + "\nlocal " + dispatchTableName + "={" + vmParser + "}");
+        template = template.replaceAll("%%VMINSTRUCTIONS%%", "local " + handlerName + "=" + dispatchTableName + "[(" + enumKeyword + "+" + dispatchSaltName + ")%257];\nif not " + handlerName + " then error(%%STRING14%%,0);end;\nlocal " + doneName + "," + valuesName + "," + countName + "=" + handlerName + "();\nif " + doneName + " then return " + valuesName + "," + countName + ";end;");
         for (String opcode : opcodes.keySet()) {
             template = template.replaceAll("%%" + opcode + "%%", "" + generateLuaObfNumber(opcodes.get(opcode)) + "");
         }
@@ -820,14 +809,7 @@ public class CompilerOptions {
         String luaChunkRead = "";
 
 
-        template = template.replaceAll("%%CODES%%", "if (Type == " + opCodeNames.get(0) + ") then -- Most common, basic instruction type.\n" +
-                "\t\t\t\tInst[2]\t= gBit(Data, 24, 32);\n" +
-                "\t\t\t\tInst[3]\t= gBit(Data, 15, 23);\n" +
-                "\t\t\telseif (Type == " + opCodeNames.get(1) + ") then\n" +
-                "\t\t\t\tInst[2]\t= gBit(Data, 15, 32);\n" +
-                "\t\t\telseif (Type == " + opCodeNames.get(2) + ") then\n" +
-                "\t\t\t\tInst[2]\t= gBit(Data, 15, 32) - 131071;\n" +
-                "\t\t\tend;");
+        template = template.replaceAll("%%CODES%%", generateInstructionDecode());
 
 
         template = template.replaceAll("%%UNIQUEID%%", uniqueId + "");
@@ -849,9 +831,9 @@ public class CompilerOptions {
 
         template = template.replaceAll("%%STRING12%%", generateCustomString("\\4\\8\\0"));
         template = template.replaceAll("%%STRING13%%", generateCustomString("Unsupported bytecode target platform"));
+        template = template.replaceAll("%%STRING14%%", generateCustomString("Invalid interpreter dispatch"));
         //
 
-        System.out.println(values.size());
         for (int i = 0; i < values.size(); i++)
             customStringStuff += "[" + (i + 1) + "]=" + values.get(i) + ";";
 
@@ -862,36 +844,53 @@ public class CompilerOptions {
         return template;
     }
 
-    private String generateLuaObfNumber(int number) {
-        if (1 == 1) {
-            return number + "";
-        }
-        StringBuilder lua = new StringBuilder("#{'Xell'");
-        Random random = new Random();
-        if (number > 50) {
-            for (int i = 0; i < 50; i++) {
-                lua.append(",").append(random.nextInt(10000));
-            }
-        } else {
-            for (int i = 0; i < number - 1; i++) {
-                lua.append(",").append(random.nextInt(10000));
-            }
-        }
-        // if(1==1) {
-        // return number+"";
-        //}
-        if (number > 50) {
-            return lua + "} + " + ((number - 1) - 50);
-        } else {
-            return lua + "}";
-        }
+    private String generateInstructionDecode() {
+        String modeName = "__xell_mode";
+        String aName = "__xell_mode_abc";
+        String bName = "__xell_mode_abx";
+        String cName = "__xell_mode_asbx";
+        return "local " + modeName + "=Type;\n"
+                + "local " + aName + "," + bName + "," + cName + "=" + opCodeNames.get(0) + "," + opCodeNames.get(1) + "," + opCodeNames.get(2) + ";\n"
+                + "if " + modeName + "==" + aName + " then\n"
+                + "Inst[2]=gBit(Data,24,32);\n"
+                + "Inst[3]=gBit(Data,15,23);\n"
+                + "elseif " + modeName + "==" + bName + " then\n"
+                + "Inst[2]=gBit(Data,15,32);\n"
+                + "elseif " + modeName + "==" + cName + " then\n"
+                + "Inst[2]=gBit(Data,15,32)-131071;\n"
+                + "end;";
+    }
 
+    private String prepareVmHandler(int opcode, String handler) {
+        if (opcode == 29) {
+            return handler.replace("\t\t\t\t\treturn Results, Rets; end", "\t\t\t\t\treturn true, Results, Rets; end");
+        }
+        if (opcode == 30) {
+            return handler
+                    .replace("\t\t\t\t\t\treturn;\n", "\t\t\t\t\t\treturn true;\n")
+                    .replace("\t\t\t\t\treturn Output, Edx; end", "\t\t\t\t\treturn true, Output, Edx; end");
+        }
+        return handler;
+    }
+
+    private int getShuffledOpcodeForOriginal(int originalOpcode) {
+        for (Map.Entry<String, Integer> entry : opcodesOriginal.entrySet()) {
+            if (entry.getValue() == originalOpcode) {
+                return opcodes.get(entry.getKey());
+            }
+        }
+        throw new IllegalArgumentException("Unknown opcode " + originalOpcode);
+    }
+
+    private String generateLuaObfNumber(int number) {
+        int mask = random.nextInt(9000) + 1000;
+        return "(" + (number + mask) + "-" + mask + ")";
     }
 
 
     private <K, V> void shuffleMap(Map<K, V> map) {
         List<V> valueList = new ArrayList<V>(map.values());
-        Collections.shuffle(valueList);
+        Collections.shuffle(valueList, random);
         Iterator<V> valueIt = valueList.iterator();
         for (Map.Entry<K, V> e : map.entrySet()) {
             e.setValue(valueIt.next());
@@ -901,7 +900,6 @@ public class CompilerOptions {
     public int getStringCacheId(String s) {
         if (!stringsCache.contains(s)) {
             stringsCache.addLast(s);
-            System.out.println("::DEBUG:: New string added to the cache! '" + s + "'");
             return stringsCache.size() - 1;
         }
         return stringsCache.indexOf(s);
@@ -924,13 +922,20 @@ public class CompilerOptions {
     }
 
     public int getOpcode(String opcode) {
-        System.out.println("<- " + opcode + " ->");
         int rOpcode = opcodes.get(opcode); //this is the newly assigned opcode
         int originalOpcode = opcodesOriginal.get(opcode);
-        System.out.println("original -> " + originalOpcode);
         if (!usedOpcodes.contains(originalOpcode)) {
             usedOpcodes.add(originalOpcode);
         }
         return rOpcode;
     }
+
+    private String randomString(int length, char[] chars) {
+        StringBuilder value = new StringBuilder(length);
+        for (int i = 0; i < length; i++) {
+            value.append(chars[random.nextInt(chars.length)]);
+        }
+        return value.toString();
+    }
+
 }

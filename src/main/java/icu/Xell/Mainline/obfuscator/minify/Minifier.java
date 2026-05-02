@@ -2,18 +2,28 @@ package icu.Xell.Mainline.obfuscator.minify;
 
 import com.google.common.collect.Sets;
 import com.google.common.hash.HashCode;
+import org.apache.commons.io.IOUtils;
 
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 /**
  * A central location for the minification of Lua Files. This will likely
@@ -26,7 +36,7 @@ public final class Minifier {
 
     public static final Path SCRIPT_DIR = Paths.get("scripts");
 
-    private static final String HEADER_COMMENT = "--[[--|Obfuscated with Xell|--]]--\n";
+    private static final String HEADER_COMMENT = "";
 
     /**
      * Nashorn JavaScript Engine -- {@link ScriptEngine} Object
@@ -35,7 +45,7 @@ public final class Minifier {
     /**
      * Nashorn JavaScript Engine as Invocable -- {@link Invocable} Object
      */
-    private static final Invocable nashorn = (Invocable) nashornJS;
+    private static final Invocable nashorn = nashornJS instanceof Invocable ? (Invocable) nashornJS : null;
 
     private static final Object luaparseObj, luaminObj;
     // Pre-compiled Regex Pattern for Single or Double Quoted String
@@ -52,22 +62,92 @@ public final class Minifier {
      * @throws ScriptException If failed to minify
      */
     private static Pattern ccLineEndingPattern = Pattern.compile("\n");
+    private static final int DEFAULT_DARKLUA_COLUMN_SPAN = 2;
+
+    private static String darkluaSourceConfig() {
+        return "{\n" +
+            "  generator: { name: \"dense\", column_span: " + darkluaColumnSpan("source") + " },\n" +
+            "  rules: [\n" +
+            "    \"remove_comments\",\n" +
+            "    \"remove_types\",\n" +
+            "    \"convert_luau_number\",\n" +
+            "    { rule: \"remove_interpolated_string\", strategy: \"string\" },\n" +
+            "    \"remove_continue\",\n" +
+            "    \"remove_compound_assignment\",\n" +
+            "    \"remove_floor_division\",\n" +
+            "    \"remove_if_expression\",\n" +
+            "    \"convert_local_function_to_assign\",\n" +
+            "    \"filter_after_early_return\",\n" +
+            "    \"remove_empty_do\",\n" +
+            "    \"remove_nil_declaration\",\n" +
+            "    \"remove_spaces\",\n" +
+            "    \"group_local_assignment\",\n" +
+            "    { rule: \"rename_variables\", include_functions: true, globals: [\"$default\", \"$roblox\"] }\n" +
+            "  ]\n" +
+            "}\n";
+    }
+
+    private static String darkluaFinalConfig() {
+        return "{\n" +
+            "  generator: { name: \"dense\", column_span: " + darkluaColumnSpan("final") + " },\n" +
+            "  rules: [\n" +
+            "    \"remove_comments\",\n" +
+            "    \"convert_local_function_to_assign\",\n" +
+            "    \"remove_spaces\",\n" +
+            "    \"group_local_assignment\",\n" +
+            "    { rule: \"rename_variables\", include_functions: true, globals: [\"$default\", \"$roblox\"] }\n" +
+            "  ]\n" +
+            "}\n";
+    }
+
+    private static int darkluaColumnSpan(String stage) {
+        String value = firstNonEmpty(
+                System.getProperty("xell.darklua." + stage + ".column_span"),
+                System.getenv("XELL_DARKLUA_" + stage.toUpperCase() + "_COLUMN_SPAN"),
+                System.getProperty("xell.darklua.column_span"),
+                System.getenv("XELL_DARKLUA_COLUMN_SPAN")
+        );
+        if (value == null) {
+            return DEFAULT_DARKLUA_COLUMN_SPAN;
+        }
+        try {
+            int parsed = Integer.parseInt(value.trim());
+            return parsed > 0 ? parsed : DEFAULT_DARKLUA_COLUMN_SPAN;
+        } catch (NumberFormatException ignored) {
+            return DEFAULT_DARKLUA_COLUMN_SPAN;
+        }
+    }
+
+    private static String firstNonEmpty(String... values) {
+        for (String value : values) {
+            if (value != null && !value.trim().isEmpty()) {
+                return value;
+            }
+        }
+        return null;
+    }
 
     static {
+        Object luaparse = null;
+        Object luamin = null;
         try {
-            // Load luaparse requirement, then load luamin
-            nashornJS.eval(Files.newBufferedReader(SCRIPT_DIR.resolve(Paths.get("luamin", "node_modules", "luaparse", "luaparse.js"))));
-            nashornJS.eval(Files.newBufferedReader(SCRIPT_DIR.resolve(Paths.get("luamin", "luamin.js"))));
+            if (nashornJS != null) {
+                // Load luaparse requirement, then load luamin
+                nashornJS.eval(Files.newBufferedReader(SCRIPT_DIR.resolve(Paths.get("luamin", "node_modules", "luaparse", "luaparse.js"))));
+                nashornJS.eval(Files.newBufferedReader(SCRIPT_DIR.resolve(Paths.get("luamin", "luamin.js"))));
 
-            // Store global Parse Options as JavaScript Object
-            nashornJS.eval("var _PARSE_VARS = {scope: true}");
+                // Store global Parse Options as JavaScript Object
+                nashornJS.eval("var _PARSE_VARS = {scope: true}");
 
-            // Retrieve LuaParse and LuaMin Objects on which to execute Lua Methods from
-            luaparseObj = nashornJS.get("luaparse");
-            luaminObj = nashornJS.get("luamin");
+                // Retrieve LuaParse and LuaMin Objects on which to execute Lua Methods from
+                luaparse = nashornJS.get("luaparse");
+                luamin = nashornJS.get("luamin");
+            }
         } catch (IOException | ScriptException e) {
             throw new ExceptionInInitializerError(e);
         }
+        luaparseObj = luaparse;
+        luaminObj = luamin;
     }
 
     /**
@@ -79,19 +159,8 @@ public final class Minifier {
      * @throws ScriptException If an error occurs during evaluation
      */
     public static String minifyFile(Path path) throws IOException, ScriptException {
-        String content = new String(Files.readAllBytes(Paths.get("Xell.out.lua")));
-
-        final Object res;
-        final String s;
-        try {
-            // Get Result of luaparse#parse, pass to luamin#minify and get String result
-            res = nashorn.invokeMethod(luaparseObj, "parse", content);
-            s = nashorn.invokeMethod(luaminObj, "minify", res).toString();
-        } catch (NoSuchMethodException e) {
-            throw new IOException("Something is wrong with luaparse.parse and/or luamin.minify! Methods not found!", e);
-        }
-
-        return HEADER_COMMENT + repairBrokenLuaStrings(s.replace(";", "\n"));
+        String content = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+        return minifyFinalWithDarklua(content);
     }
 
     /**
@@ -102,17 +171,159 @@ public final class Minifier {
      * @throws ScriptException
      */
     public static String minify(String code) throws ScriptException {
-        final Object ast;
-        final String res;
+        return minifyFinalWithDarklua(code);
+    }
 
+    public static String minifySourceWithDarklua(String code) throws ScriptException {
+        return processWithDarklua(code, darkluaSourceConfig(), "source");
+    }
+
+    public static String minifyFinalWithDarklua(String code) throws ScriptException {
+        return processWithDarklua(code, darkluaFinalConfig(), "final");
+    }
+
+    private static String processWithDarklua(String code, String config, String stage) throws ScriptException {
+        Path tempDir = null;
         try {
-            ast = nashorn.invokeMethod(luaparseObj, "parse", code, nashornJS.get("_PARSE_VARS"));
-            res = nashorn.invokeMethod(luaminObj, "minify", ast).toString();
-        } catch (NoSuchMethodException e) {
-            throw new ScriptException("Something is wrong with luaparse.parse and/or luamin.minify! Methods not found!");
+            tempDir = Files.createTempDirectory("xell-darklua-");
+            Path input = tempDir.resolve(stage + ".lua");
+            Path output = tempDir.resolve(stage + ".out.lua");
+            Path configPath = tempDir.resolve(stage + ".darklua.json5");
+            Files.write(input, code.getBytes(StandardCharsets.UTF_8));
+            Files.write(configPath, config.getBytes(StandardCharsets.UTF_8));
+
+            ProcessBuilder builder = new ProcessBuilder(
+                    darkluaCommand(),
+                    "process",
+                    "--config",
+                    configPath.toString(),
+                    input.toString(),
+                    output.toString()
+            );
+            builder.directory(Paths.get("").toAbsolutePath().toFile());
+            Process process = builder.start();
+            boolean finished = process.waitFor(120, TimeUnit.SECONDS);
+            String stdout = new String(IOUtils.toByteArray(process.getInputStream()), StandardCharsets.UTF_8);
+            String stderr = new String(IOUtils.toByteArray(process.getErrorStream()), StandardCharsets.UTF_8);
+            if (!finished) {
+                process.destroyForcibly();
+                throw new ScriptException("darklua timed out while processing " + stage + " Lua");
+            }
+            if (process.exitValue() != 0) {
+                String message = stderr.isEmpty() ? stdout : stderr;
+                throw new ScriptException("darklua failed while processing " + stage + " Lua: " + message);
+            }
+            return new String(Files.readAllBytes(output), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            ScriptException scriptException = new ScriptException("Unable to run darklua for " + stage + " Lua: " + e.getMessage());
+            scriptException.initCause(e);
+            throw scriptException;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            ScriptException scriptException = new ScriptException("Interrupted while running darklua for " + stage + " Lua");
+            scriptException.initCause(e);
+            throw scriptException;
+        } finally {
+            if (tempDir != null) {
+                try (Stream<Path> paths = Files.walk(tempDir)) {
+                    paths.sorted(Comparator.reverseOrder())
+                         .forEach(path -> {
+                             try {
+                                 Files.deleteIfExists(path);
+                             } catch (IOException ignored) {
+                             }
+                         });
+                } catch (IOException ignored) {
+                }
+            }
+        }
+    }
+
+    private static String darkluaCommand() {
+        String configured = firstNonEmpty(
+                System.getProperty("xell.darklua.path"),
+                System.getenv("XELL_DARKLUA_PATH")
+        );
+        if (configured != null) {
+            return configured;
         }
 
-        return HEADER_COMMENT + "\n" + res.replace("\n", ";");
+        for (Path candidate : darkluaCandidates()) {
+            if (Files.isRegularFile(candidate)) {
+                return candidate.toAbsolutePath().toString();
+            }
+        }
+        return "darklua";
+    }
+
+    private static List<Path> darkluaCandidates() {
+        List<Path> candidates = new ArrayList<Path>();
+        String exe = isWindows() ? "darklua.exe" : "darklua";
+        candidates.add(Paths.get(exe));
+        candidates.add(Paths.get("app", exe));
+
+        Path codeLocation = codeLocation();
+        if (codeLocation != null) {
+            candidates.add(codeLocation.resolve(exe));
+            candidates.add(codeLocation.resolve("app").resolve(exe));
+        }
+        return candidates;
+    }
+
+    private static Path codeLocation() {
+        try {
+            URI uri = Minifier.class.getProtectionDomain().getCodeSource().getLocation().toURI();
+            Path location = Paths.get(uri);
+            return Files.isRegularFile(location) ? location.getParent() : location;
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private static boolean isWindows() {
+        return System.getProperty("os.name", "").toLowerCase().contains("win");
+    }
+
+    private static String minifyWithNode(String code) throws ScriptException {
+        ProcessBuilder builder = new ProcessBuilder(
+                "node",
+                "-e",
+                "const fs=require('fs');" +
+                        "const luamin=require('./scripts/luamin/luamin.js');" +
+                        "let input='';" +
+                        "process.stdin.setEncoding('utf8');" +
+                        "process.stdin.on('data', chunk => input += chunk);" +
+                        "process.stdin.on('end', () => {" +
+                        "  try { process.stdout.write(luamin.minify(input)); }" +
+                        "  catch (err) { console.error(err && err.stack || err); process.exit(1); }" +
+                        "});"
+        );
+        builder.directory(Paths.get("").toAbsolutePath().toFile());
+
+        try {
+            Process process = builder.start();
+            try (Writer writer = new OutputStreamWriter(process.getOutputStream(), StandardCharsets.UTF_8)) {
+                writer.write(code);
+            }
+
+            String output = new String(IOUtils.toByteArray(process.getInputStream()), StandardCharsets.UTF_8);
+            String error = new String(IOUtils.toByteArray(process.getErrorStream()), StandardCharsets.UTF_8);
+            int exitCode = process.waitFor();
+            if (exitCode != 0) {
+                throw new ScriptException(error.isEmpty() ? "Node luamin exited with code " + exitCode : error);
+            }
+
+            return HEADER_COMMENT + output.replace("\n", ";");
+        } catch (IOException e) {
+            ScriptException scriptException = new ScriptException("Unable to run Node.js luamin fallback: " + e.getMessage());
+            scriptException.initCause(e);
+            throw scriptException;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            ScriptException scriptException = new ScriptException("Interrupted while running Node.js luamin fallback");
+            scriptException.initCause(e);
+            throw scriptException;
+        }
     }
 
     // Fast Hash Function at 32 bits. We don't need a high quality hash function. Minimal bit count.

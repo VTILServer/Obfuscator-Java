@@ -39,11 +39,7 @@
 		'^': 10
 	};
 
-	var IDENTIFIER_PARTS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a',
-		'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p',
-		'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E',
-		'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',
-		'U', 'V', 'W', 'X', 'Y', 'Z', '_']; // yes yes
+	var IDENTIFIER_PARTS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'j', 'k', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'];
 	var IDENTIFIER_PARTS_MAX = IDENTIFIER_PARTS.length - 1;
 
 	var each = function(array, fn) {
@@ -80,7 +76,7 @@
 
 	var generateZeroes = function(length) {
 		// length = length + 10
-		var zero = '0';
+		var zero = IDENTIFIER_PARTS[0];
 		var result = '';
 		if (length < 1) {
 			return result;
@@ -121,8 +117,21 @@
 	}
 
 	var currentIdentifier;
+	var identifierCounter;
 	var identifierMap;
 	var identifiersInUse;
+	var generateIdentifierName = function(index) {
+		var firstParts = ['i', 'I', 'l'];
+		var restParts = IDENTIFIER_PARTS;
+		var name = firstParts[index % firstParts.length];
+		index = Math.floor(index / firstParts.length);
+		while (index > 0) {
+			index -= 1;
+			name += restParts[index % restParts.length];
+			index = Math.floor(index / restParts.length);
+		}
+		return name;
+	};
 	var generateIdentifier = function(originalName) {
 		// Preserve `self` in methods
 		if (originalName == 'self') {
@@ -132,32 +141,15 @@
 		if (hasOwnProperty.call(identifierMap, originalName)) {
 			return identifierMap[originalName];
 		}
-		var length = currentIdentifier.length;
-		var position = length - 1;
-		var character;
-		var index;
-		while (position >= 0) {
-			character = currentIdentifier.charAt(position);
-			index = indexOf(IDENTIFIER_PARTS, character);
-			if (index != IDENTIFIER_PARTS_MAX) {
-				currentIdentifier = currentIdentifier.substring(0, position) + IDENTIFIER_PARTS[index + 1] + generateZeroes(length - (position + 1));
-				if (
-					isKeyword(currentIdentifier) ||
-					indexOf(identifiersInUse, currentIdentifier) > -1
-				) {
-					return generateIdentifier(originalName);
-				}
-				identifierMap[originalName] = currentIdentifier;
-				return currentIdentifier;
-			}
-			--position;
-		}
-		currentIdentifier = '_' + generateZeroes(length);
-		if (indexOf(identifiersInUse, currentIdentifier) > -1) {
-			return generateIdentifier(originalName);
-		}
-		identifierMap[originalName] = currentIdentifier;
-		return currentIdentifier;
+		var identifier;
+		do {
+			identifier = generateIdentifierName(identifierCounter++);
+		} while (
+			isKeyword(identifier) ||
+			indexOf(identifiersInUse, identifier) > -1
+		);
+		identifierMap[originalName] = identifier;
+		return identifier;
 	};
 
 	/*--------------------------------------------------------------------------*/
@@ -630,8 +622,7 @@
 		// (Re)set temporary identifier values
 		identifierMap = {};
 		identifiersInUse = [];
-		// This is a shortcut to help generate the first identifier (`a`) faster
-		currentIdentifier = '9';
+		identifierCounter = 0;
 
 		// Make sure global variable names aren't renamed
 		if (ast.globals) {

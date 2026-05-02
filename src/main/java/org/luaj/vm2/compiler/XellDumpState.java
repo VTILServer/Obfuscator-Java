@@ -181,7 +181,6 @@ public class XellDumpState {
         dumpDouble(val ? 1 : 0);
         if (val) {
             //Xell: Fuck up the decompilers seriously
-            System.out.println("::DEBUG:: Fucking constants");
             String[] bait = new String[]{"if", "else", "end", "for", "local"};
             for (String xd : bait) {
                 LuaValue baitVariable = LuaValue.valueOf(xd);
@@ -296,7 +295,6 @@ public class XellDumpState {
         dumpDebug(f);
 		/*
 		for(String s : opts.getChunkDataOrder()) {
-			System.out.println("[vm] dumping: " + s);
 			if(s.equals("CODE")) {
 				dumpCode(f);
 			}
